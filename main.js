@@ -22,18 +22,16 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.z = 50;
+camera.position.z = 4;
 
 const canvas = document.getElementById("canv");
 
 //Renderer
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setSize(sizes.width, sizes.height);
-renderer.setPixelRatio(2);
-// renderer.autoClear = false;
+renderer.setPixelRatio(1);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-// renderer.setClearColor(0x000000, 0.0);
 document.body.appendChild(renderer.domElement);
 
 //Bloom Pass
@@ -56,17 +54,70 @@ bloomComposer.addPass(bloomPass);
 //galaxy geometry
 const starGeometry = new THREE.SphereGeometry(80, 64, 64);
 
-//galxy material
+//galaxy material
 const starMaterial = new THREE.MeshBasicMaterial({
   map: new THREE.TextureLoader().load("./public/texture/galaxy1.png"),
   side: THREE.BackSide,
   transparent: true,
 });
 
-//galaxy maesh
+//galaxy mesh
 const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-starMesh.layers.set(1)
-scene.add(starMesh)
+starMesh.layers.set(1);
+scene.add(starMesh);
+
+//earth object
+
+const earthGeometry = new THREE.SphereGeometry(0.98, 32, 32);
+const earthMaterial = new THREE.MeshPhongMaterial({
+  map: new THREE.TextureLoader().load("./public/texture/earthmap1.jpg"),
+  bumpMap: new THREE.TextureLoader().load("./public/texture/bump.jpg"),
+  bumpScale: 0.3,
+});
+
+const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+earthMesh.receiveShadow = true;
+earthMesh.castShadow = true;
+earthMesh.layers.set(1);
+scene.add(earthMesh);
+
+//moon object
+
+const cloudGeometry = new THREE.SphereGeometry(1, 32, 32);
+const cloudMaterial = new THREE.MeshPhongMaterial({
+  map: new THREE.TextureLoader().load("./public/texture/earthCloud.png"),
+  transparent: true,  
+});
+
+const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
+cloudMesh.receiveShadow = true;
+cloudMesh.castShadow = true;
+cloudMesh.layers.set(1);
+scene.add(cloudMesh);
+
+//Moon object
+
+const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+const moonMaterial = new THREE.MeshPhongMaterial({
+  map: new THREE.TextureLoader().load("./public/texture/moonmap4k.jpg"),
+  bumpMap: new THREE.TextureLoader().load("./public/texture/moonbump4k.jpg"),
+  bumpScale: 0.3,
+});
+
+const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+moonMesh.receiveShadow = true;
+moonMesh.castShadow = true;
+moonMesh.position.x = 2;
+moonMesh.layers.set(1);
+scene.add(moonMesh);
+
+var moonPivot = new THREE.Object3D();
+earthMesh.add(moonPivot);
+moonPivot.add(moonMesh);
+
+// var cameraPivot = new THREE.Object3D();
+// earthMesh.add(cameraPivot);
+// cameraPivot.add(camera);
 
 //sun object
 const color = new THREE.Color("#FDB813");
@@ -80,69 +131,71 @@ sphere.layers.set(1);
 scene.add(sphere);
 
 //ambient light
-const ambientlight = new THREE.AmbientLight(0xffffff, 0.2);
-scene.add(ambientlight);
+const ambientlight = new THREE.AmbientLight(0xffffff, 2);
+// scene.add(ambientlight);
 
 //Lights
-const light = new THREE.PointLight(0xffa500, 0.5, 100);
-const light2 = new THREE.PointLight(0xffffff, 0.02, 100);
-
-light.position.set(0, 0, 0);
-light2.position.set(0, 0, 20);
-light.layers.set(1);
-light2.layers.set(1);
-scene.add(light);
-scene.add(light2);
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.castShadow = true;
+// pointLight.shadow.bias = 0.00001;
+// pointLight.shadow.camera = true;
+// pointLight.shadow.mapSize.width = 2048;
+// pointLight.shadow.mapSize.height = 2048;
+pointLight.position.set(-50, 20, -60);
+pointLight.layers.set(1);
+scene.add(pointLight);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enableZoom = false;
 
-//sun geometry
-const sgeometry = new THREE.SphereGeometry(3, 64, 64);
-const smaterial = new THREE.MeshStandardMaterial({
-  color: 0x89cff0,
-  emissive: 0xffa500,
-  emissiveIntensity: 1,
-});
 
-//earth geometry
-const pgeometry = new THREE.SphereGeometry(1, 64, 64);
-const pmaterial = new THREE.MeshStandardMaterial({ color: 0x89cff0 });
-const sun = new THREE.Mesh(sgeometry, smaterial);
-const earth = new THREE.Mesh(pgeometry, pmaterial);
+// const earth = new THREE.Mesh(pgeometry, pmaterial);
 
-earth.layers.set(1);
-scene.add(earth);
+// earth.layers.set(1);
+// scene.add(earth);
 // scene.add(sun);
 
 //Animate
 function animate() {
   requestAnimationFrame(animate);
-  deg += 0.004;
-  earth.position.x = 15 * Math.cos(deg);
-  earth.position.z = 15 * Math.sin(deg);
+  // deg += 0.004;
+  // earth.position.x = 15 * Math.cos(deg);
+  // earth.position.z = 15 * Math.sin(deg);
 
-  starMesh.rotation.y += 0.0002
+  // cameraPivot.rotation.y += 0.0002;
+  moonPivot.rotation.y -= 0.005;
+  moonPivot.rotation.x = 0.5;
+
+  starMesh.rotation.y += 0.0002;
+  cloudMesh.rotation.y -= 0.0009
+  earthMesh.rotation.y += 0.003;
   renderer.render(scene, camera);
   camera.layers.set(1);
   bloomComposer.render();
-  camera.layers.set(0);
+  renderer.clearDepth();
+
+  // camera.layers.set(0);
 }
 
 //Update sizes
-window.addEventListener("resize", () => {
-  //update sizes
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
+window.addEventListener(
+  "resize",
+  () => {
+    //update sizes
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
 
-  //update camera
-  camera.aspect = sizes.width / sizes.height;
+    //update camera
+    camera.aspect = sizes.width / sizes.height;
 
-  renderer.setSize(sizes.width, sizes.height);
-  camera.updateProjectionMatrix();
-  renderer.render(scene, camera);
-});
+    renderer.setSize(sizes.width, sizes.height);
+    bloomComposer.setSize(sizes.width, sizes.height);
+    camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+  },
+  false
+);
 
 //Check if browser suppports the WebGL
 if (WebGL.isWebGLAvailable()) {
@@ -155,6 +208,5 @@ if (WebGL.isWebGLAvailable()) {
 
 const t1 = gsap.timeline({ defaults: { duration: 1 } });
 t1.fromTo("nav", { y: "-100%" }, { delay: 0, duration: 1, y: "0%" });
-t1.fromTo(sun.scale, { z: 0, x: 0, y: 0 }, { z: 1, x: 1, y: 1 });
-t1.fromTo(".title", { opacity: 0 }, { opacity: 1});
+t1.fromTo(".title", { opacity: 0 }, { opacity: 1 });
 // t1.fromTo(earth.scale, { z: 0, x: 0, y: 0 }, { z: 1, x: 1, y: 1, duration:0 });
